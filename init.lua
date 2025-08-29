@@ -4,13 +4,14 @@ local create_floating = require("floating.floating")
 local Scene = require("waywork.scene")
 local Modes = require("waywork.modes")
 local Keys = require("waywork.keys")
+local Processes = require("waywork.processes")
 
 -- === theme and constants ===
 local bg_col, primary_col, secondary_col = "#000000", "#ec6e4e", "#E446C4"
 local ninbot_anchor, ninbot_opacity = "topright", 1
 local java_path = "/usr/lib/jvm/java-24-openjdk/bin/java"
-local pacem_path = "/home/seangle/apps/paceman-tracker/paceman-tracker.jar"
-local nb_path = "/home/seangle/apps/ninjabrain-bot/ninjabrain-bot.jar"
+local paceman_path = "/home/seangle/apps/paceman-tracker/paceman-tracker.jar"
+local ninbot_path = "/home/seangle/apps/ninjabrain-bot/ninjabrain-bot.jar"
 local overlay_path = "/home/seangle/games/mcsr/resources/measuring_overlay.png"
 
 local base_sens = 6.6666668
@@ -43,28 +44,72 @@ local scene = Scene.SceneManager.new(ww)
 scene:register("e_counter", {
 	kind = "mirror",
 	options = { src = { x = 1, y = 37, w = 49, h = 9 }, dst = { x = 1150, y = 300, w = 196, h = 36 } },
-	groups = { "thin", "e_counter" },
+	groups = { "thin" },
 })
 scene:register("thin_pie_all", {
 	kind = "mirror",
-	options = { src = { x = 11, y = 680, w = 318, h = 170 }, dst = { x = 1150, y = 500, w = 318, h = 325 } },
+	options = { src = { x = 10, y = 680, w = 320, h = 170 }, dst = { x = 1150, y = 500, w = 320, h = 325 } },
 	groups = { "thin" },
 })
-scene:register("thin_percent_all", {
+-- scene:register("thin_percent_all", {
+-- 	kind = "mirror",
+-- 	options = { src = { x = 248, y = 860, w = 82, h = 24 }, dst = { x = 1150, y = 850, w = 492, h = 144 } },
+-- 	groups = { "thin" },
+-- })
+
+local tpld = { w = 32, h = 24 }
+scene:register("thin_percent_left", {
 	kind = "mirror",
-	options = { src = { x = 248, y = 860, w = 82, h = 24 }, dst = { x = 1150, y = 850, w = 492, h = 144 } },
+	options = {
+		src = { x = 248, y = 860, w = tpld.w, h = tpld.h },
+		dst = { x = 1150, y = 850, w = tpld.w * 6, h = tpld.h * 6 },
+	},
+	groups = { "thin" },
+})
+
+local tprd = { w = 26, h = 24 }
+scene:register("thin_percent_right", {
+	kind = "mirror",
+	options = {
+		src = { x = 304, y = 860, w = tprd.w, h = tprd.h },
+		dst = { x = 1150 + tpld.w * 6 + 20, y = 850, w = tprd.w * 6, h = tprd.h * 6 },
+	},
 	groups = { "thin" },
 })
 
 -- Tall layout mirrors
-scene:register("tall_pie_all", {
+scene:register("tall_e_counter", {
 	kind = "mirror",
-	options = { src = { x = 54, y = 15984, w = 320, h = 170 }, dst = { x = 1250, y = 500, w = 315, h = 317 } },
+	options = { src = { x = 1, y = 37, w = 49, h = 9 }, dst = { x = 1170, y = 300, w = 196, h = 36 } },
 	groups = { "tall" },
 })
-scene:register("tall_percent_all", {
+scene:register("tall_pie_all", {
 	kind = "mirror",
-	options = { src = { x = 292, y = 16164, w = 32, h = 24 }, dst = { x = 1300, y = 850, w = 198, h = 150 } },
+	options = { src = { x = 54, y = 15984, w = 320, h = 170 }, dst = { x = 1170, y = 500, w = 320, h = 325 } },
+	groups = { "tall" },
+})
+-- scene:register("tall_percent_all", {
+-- 	kind = "mirror",
+-- 	options = { src = { x = 292, y = 16164, w = 32, h = 24 }, dst = { x = 1170, y = 850, w = 198, h = 150 } },
+-- 	groups = { "tall" },
+-- })
+
+local tapld = { w = 32, h = 24 }
+scene:register("tall_percent_left", {
+	kind = "mirror",
+	options = {
+		src = { x = 292, y = 16164, w = tapld.w, h = tapld.h },
+		dst = { x = 1170, y = 850, w = tapld.w * 6, h = tapld.h * 6 },
+	},
+	groups = { "tall" },
+})
+local taprd = { w = 26, h = 24 }
+scene:register("tall_percent_right", {
+	kind = "mirror",
+	options = {
+		src = { x = 348, y = 16164, w = taprd.w, h = taprd.h },
+		dst = { x = 1170 + tapld.w * 6 + 20, y = 850, w = taprd.w * 6, h = taprd.h * 6 },
+	},
 	groups = { "tall" },
 })
 
@@ -72,7 +117,7 @@ scene:register("tall_percent_all", {
 scene:register("eye_measure", {
 	kind = "mirror",
 	options = { src = { x = 162, y = 7902, w = 60, h = 580 }, dst = { x = 30, y = 340, w = 700, h = 400 } },
-	groups = { "tall", "tall_eye" },
+	groups = { "tall" },
 })
 
 -- Overlay image above eye mirror
@@ -120,27 +165,9 @@ ModeManager:define("wide", {
 	height = 300,
 })
 
--- === external tools ===
-local function ensure_paceman()
-	local h = io.popen("pgrep -f " .. pacem_path)
-	local live = h and h:read("*l")
-	if h then
-		h:close()
-	end
-	if not live then
-		ww.exec(java_path .. " -jar " .. pacem_path .. " --nogui")
-	end
-end
-local function ensure_ninjabrain()
-	local h = io.popen("pgrep -f " .. nb_path)
-	local live = h and h:read("*l")
-	if h then
-		h:close()
-	end
-	if not live then
-		ww.exec(java_path .. " -Dawt.useSystemAAFontSettings=on -jar " .. nb_path)
-	end
-end
+local ensure_ninjabrain =
+	Processes.ensure_java_jar(ww, java_path, ninbot_path, { "-Dawt.useSystemAAFontSettings=on" })(ninbot_path)
+local ensure_paceman = Processes.ensure_java_jar(ww, java_path, paceman_path, { "--nogui" })(paceman_path)
 
 -- === keybinds ===
 local actions = Keys.actions({
