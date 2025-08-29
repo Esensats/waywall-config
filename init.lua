@@ -12,6 +12,8 @@ local ninbot_anchor, ninbot_opacity = "topright", 1
 local java_path = "/usr/lib/jvm/java-24-openjdk/bin/java"
 local paceman_path = "/home/seangle/apps/paceman-tracker/paceman-tracker.jar"
 local ninbot_path = "/home/seangle/apps/ninjabrain-bot/ninjabrain-bot.jar"
+local wayboard_path = "/home/seangle/.local/bin/wayboard-esensats"
+local wayboard_cfg = "/home/seangle/.config/wayboard/example.cfg"
 local overlay_path = "/home/seangle/games/mcsr/resources/measuring_overlay.png"
 
 local base_sens = 6.6666668
@@ -165,9 +167,15 @@ ModeManager:define("wide", {
 	height = 300,
 })
 
+local ensure_wayboard = Processes.ensure_application(ww, wayboard_path, { wayboard_cfg })(wayboard_path)
 local ensure_ninjabrain =
 	Processes.ensure_java_jar(ww, java_path, ninbot_path, { "-Dawt.useSystemAAFontSettings=on" })(ninbot_path)
 local ensure_paceman = Processes.ensure_java_jar(ww, java_path, paceman_path, { "--nogui" })(paceman_path)
+
+-- temp
+local function kill_wayboard()
+	ww.exec("pkill -f wayboard-esensats")
+end
 
 -- === keybinds ===
 local actions = Keys.actions({
@@ -190,9 +198,12 @@ local actions = Keys.actions({
 
 	["Ctrl-Shift-O"] = ww.toggle_fullscreen,
 
+	["Ctrl-Shift-K"] = kill_wayboard, -- temp
+
 	["Ctrl-Shift-P"] = function()
 		ensure_ninjabrain()
 		ensure_paceman()
+		ensure_wayboard()
 	end,
 
 	["*-C"] = function()
