@@ -1,0 +1,6 @@
+[submodule "waywork"]
+	path = waywork
+	url = git@github.com:Esensats/waywork.git
+[submodule "floating"]
+	path = floating
+	url = git@github.com:Esensats/waywall-floating.git
