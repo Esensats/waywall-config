@@ -118,7 +118,7 @@ scene:register("eye_overlay", {
 	kind = "image",
 	path = overlay_path,
 	options = { dst = { x = 30, y = 340, w = 700, h = 400 }, depth = 999 },
-	groups = { "tall", "tall_eye" },
+	groups = { "tall" },
 })
 
 -- === modes (resolutions + hooks) ===
