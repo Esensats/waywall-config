@@ -43,7 +43,8 @@ local floating = create_floating({
 -- === scene registry ===
 local scene = Scene.SceneManager.new(waywall)
 
--- Thin layout mirrors
+-- == thin layout mirrors ==
+
 scene:register("e_counter", {
 	kind = "mirror",
 	options = { src = { x = 1, y = 37, w = 49, h = 9 }, dst = { x = 1150, y = 300, w = 196, h = 36 } },
@@ -55,6 +56,7 @@ scene:register("thin_pie_all", {
 	groups = { "thin" },
 })
 
+--- Thin group, left side percentages dimensions
 local tpld = { w = 32, h = 24 }
 scene:register("thin_percent_left", {
 	kind = "mirror",
@@ -65,6 +67,7 @@ scene:register("thin_percent_left", {
 	groups = { "thin" },
 })
 
+--- Thin group, right side percentages dimensions
 local tprd = { w = 26, h = 24 }
 scene:register("thin_percent_right", {
 	kind = "mirror",
@@ -75,7 +78,8 @@ scene:register("thin_percent_right", {
 	groups = { "thin" },
 })
 
--- Tall layout mirrors
+-- == tall layout mirrors ==
+
 scene:register("tall_e_counter", {
 	kind = "mirror",
 	options = { src = { x = 1, y = 37, w = 49, h = 9 }, dst = { x = 1170, y = 300, w = 196, h = 36 } },
@@ -87,6 +91,7 @@ scene:register("tall_pie_all", {
 	groups = { "tall" },
 })
 
+--- Tall percent left side dimensions
 local tapld = { w = 32, h = 24 }
 scene:register("tall_percent_left", {
 	kind = "mirror",
@@ -96,6 +101,8 @@ scene:register("tall_percent_left", {
 	},
 	groups = { "tall" },
 })
+
+--- Tall percent right side dimensions
 local taprd = { w = 26, h = 24 }
 scene:register("tall_percent_right", {
 	kind = "mirror",
@@ -122,9 +129,9 @@ scene:register("eye_overlay", {
 })
 
 -- === modes (resolutions + hooks) ===
-local ModeManager = Modes.ModeManager.new(waywall)
+local mode_manager = Modes.ModeManager.new(waywall)
 
-ModeManager:define("thin", {
+mode_manager:define("thin", {
 	width = 340,
 	height = 1080,
 	on_enter = function()
@@ -137,7 +144,7 @@ ModeManager:define("thin", {
 })
 
 -- Tall mode has a guard to prevent accidental toggles during gamemode switches
-ModeManager:define("tall", {
+mode_manager:define("tall", {
 	width = 384,
 	height = 16384,
 	toggle_guard = function()
@@ -153,7 +160,7 @@ ModeManager:define("tall", {
 	end,
 })
 
-ModeManager:define("wide", {
+mode_manager:define("wide", {
 	width = 1920,
 	height = 300,
 })
@@ -171,13 +178,13 @@ end
 -- === keybinds ===
 local actions = Keys.actions({
 	["*-Alt_L"] = function()
-		return ModeManager:toggle("thin")
+		return mode_manager:toggle("thin")
 	end,
 	["*-F4"] = function()
-		return ModeManager:toggle("tall")
+		return mode_manager:toggle("tall")
 	end,
 	["*-Shift-V"] = function()
-		return ModeManager:toggle("wide")
+		return mode_manager:toggle("wide")
 	end,
 
 	["Ctrl-E"] = function()
