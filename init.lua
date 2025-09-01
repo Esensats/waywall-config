@@ -1,4 +1,4 @@
-local ww = require("waywall")
+local waywall = require("waywall")
 local helpers = require("waywall.helpers")
 local create_floating = require("floating.floating")
 local Scene = require("waywork.scene")
@@ -9,11 +9,12 @@ local Processes = require("waywork.processes")
 -- === theme and constants ===
 local bg_col, primary_col, secondary_col = "#000000", "#ec6e4e", "#E446C4"
 local ninbot_anchor, ninbot_opacity = "topright", 1
-local java_path = "/usr/lib/jvm/java-24-openjdk/bin/java"
+local java_path = "/usr/lib/jvm/java-24-openjdk/bin/java" -- for jars like ninbot
 local paceman_path = "/home/seangle/apps/paceman-tracker/paceman-tracker.jar"
 local ninbot_path = "/home/seangle/apps/ninjabrain-bot/ninjabrain-bot.jar"
 local wayboard_path = "/home/seangle/.local/bin/wayboard-esensats"
 local wayboard_cfg = "/home/seangle/.config/wayboard/example.cfg"
+local enable_wayboard = false
 local overlay_path = "/home/seangle/games/mcsr/resources/measuring_overlay.png"
 
 local base_sens = 6.6666668
@@ -35,12 +36,12 @@ local config = {
 
 -- === floating controller ===
 local floating = create_floating({
-	show_floating = ww.show_floating,
-	sleep = ww.sleep,
+	show_floating = waywall.show_floating,
+	sleep = waywall.sleep,
 })
 
 -- === scene registry ===
-local scene = Scene.SceneManager.new(ww)
+local scene = Scene.SceneManager.new(waywall)
 
 -- Thin layout mirrors
 scene:register("e_counter", {
@@ -53,11 +54,6 @@ scene:register("thin_pie_all", {
 	options = { src = { x = 10, y = 680, w = 320, h = 170 }, dst = { x = 1150, y = 500, w = 320, h = 325 } },
 	groups = { "thin" },
 })
--- scene:register("thin_percent_all", {
--- 	kind = "mirror",
--- 	options = { src = { x = 248, y = 860, w = 82, h = 24 }, dst = { x = 1150, y = 850, w = 492, h = 144 } },
--- 	groups = { "thin" },
--- })
 
 local tpld = { w = 32, h = 24 }
 scene:register("thin_percent_left", {
@@ -90,11 +86,6 @@ scene:register("tall_pie_all", {
 	options = { src = { x = 54, y = 15984, w = 320, h = 170 }, dst = { x = 1170, y = 500, w = 320, h = 325 } },
 	groups = { "tall" },
 })
--- scene:register("tall_percent_all", {
--- 	kind = "mirror",
--- 	options = { src = { x = 292, y = 16164, w = 32, h = 24 }, dst = { x = 1170, y = 850, w = 198, h = 150 } },
--- 	groups = { "tall" },
--- })
 
 local tapld = { w = 32, h = 24 }
 scene:register("tall_percent_left", {
@@ -131,7 +122,7 @@ scene:register("eye_overlay", {
 })
 
 -- === modes (resolutions + hooks) ===
-local ModeManager = Modes.ModeManager.new(ww)
+local ModeManager = Modes.ModeManager.new(waywall)
 
 ModeManager:define("thin", {
 	width = 340,
@@ -150,15 +141,15 @@ ModeManager:define("tall", {
 	width = 384,
 	height = 16384,
 	toggle_guard = function()
-		return not ww.get_key("F3")
+		return not waywall.get_key("F3")
 	end,
 	on_enter = function()
 		scene:enable_group("tall", true)
-		ww.set_sensitivity(tall_sens)
+		waywall.set_sensitivity(tall_sens)
 	end,
 	on_exit = function()
 		scene:enable_group("tall", false)
-		ww.set_sensitivity(0)
+		waywall.set_sensitivity(0)
 	end,
 })
 
@@ -167,14 +158,14 @@ ModeManager:define("wide", {
 	height = 300,
 })
 
-local ensure_wayboard = Processes.ensure_application(ww, wayboard_path, { wayboard_cfg })(wayboard_path)
+local ensure_wayboard = Processes.ensure_application(waywall, wayboard_path, { wayboard_cfg })(wayboard_path)
 local ensure_ninjabrain =
-	Processes.ensure_java_jar(ww, java_path, ninbot_path, { "-Dawt.useSystemAAFontSettings=on" })(ninbot_path)
-local ensure_paceman = Processes.ensure_java_jar(ww, java_path, paceman_path, { "--nogui" })(paceman_path)
+	Processes.ensure_java_jar(waywall, java_path, ninbot_path, { "-Dawt.useSystemAAFontSettings=on" })(ninbot_path)
+local ensure_paceman = Processes.ensure_java_jar(waywall, java_path, paceman_path, { "--nogui" })(paceman_path)
 
 -- temp
 local function kill_wayboard()
-	ww.exec("pkill -f wayboard-esensats")
+	waywall.exec("pkill -f wayboard-esensats")
 end
 
 -- === keybinds ===
@@ -190,25 +181,31 @@ local actions = Keys.actions({
 	end,
 
 	["Ctrl-E"] = function()
-		ww.press_key("ESC")
+		waywall.press_key("ESC")
 	end,
 	["Ctrl-W"] = function()
-		ww.press_key("BACKSPACE")
+		waywall.press_key("BACKSPACE")
 	end,
 
-	["Ctrl-Shift-O"] = ww.toggle_fullscreen,
+	["Ctrl-Shift-O"] = waywall.toggle_fullscreen,
 
-	["Ctrl-Shift-K"] = kill_wayboard, -- temp
+	["Ctrl-Shift-K"] = function()
+		if enable_wayboard then
+			kill_wayboard()
+		end
+	end, -- temp
 
 	["Ctrl-Shift-P"] = function()
 		ensure_ninjabrain()
 		ensure_paceman()
-		ensure_wayboard()
+		if enable_wayboard then
+			ensure_wayboard()
+		end
 	end,
 
 	["*-C"] = function()
-		if ww.get_key("F3") then
-			ww.press_key("C")
+		if waywall.get_key("F3") then
+			waywall.press_key("C")
 			floating.show()
 			floating.hide_after_timeout(10000)
 		else
