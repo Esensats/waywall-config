@@ -28,7 +28,7 @@ local config = {
 		repeat_delay = 300,
 		remaps = {},
 		sensitivity = base_sens,
-		confine_pointer = true,
+		confine_pointer = false,
 	},
 	theme = { background = bg_col, ninb_anchor = ninbot_anchor, ninb_opacity = ninbot_opacity },
 	experimental = { debug = false, jit = false, tearing = false, scene_add_text = true },
